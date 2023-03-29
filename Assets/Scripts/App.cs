@@ -58,17 +58,18 @@ public class App : Entry {
         eb.Invoke("tip", "AutoLookAtCamera: " + Config.instance.AutoLookAtCamera);
       }
 
-//      // press esc to exit
-//      if (Input.GetKeyDown(KeyCode.Escape)) {
-//#if UNITY_EDITOR
-//        UnityEditor.EditorApplication.isPlaying = false;
-//#else
-//      UnityEngine.Application.Quit();
-//#endif
-//      }
+        // press esc to exit
+        if (Input.GetKeyDown(KeyCode.Escape))
+        {
+#if UNITY_EDITOR
+            UnityEditor.EditorApplication.isPlaying = false;
+#else
+      UnityEngine.Application.Quit();
+#endif
+        }
 
-      // press enter to toggle full screen
-      if (Input.GetKeyDown(KeyCode.Return)) {
+        // press enter to toggle full screen
+        if (Input.GetKeyDown(KeyCode.Return)) {
         Screen.fullScreen = !Screen.fullScreen;
       }
 

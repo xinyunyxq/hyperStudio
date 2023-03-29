@@ -69,17 +69,26 @@ public class XRCamera : CBC {
         }
 #endif
         //draw Ray line
-        LineRenderer.useWorldSpace = true;
-        //设置开始和结束位置0代表第一个点，1代表第二个点
-        Vector3 cameraPosition = this.transform.position;
-        cameraPosition.y -= 10;
-        LineRenderer.SetPosition(0, cameraPosition);
-        //Debug.Log(this.transform.position);
-        Vector3 mousePosition = new Vector3(Input.mousePosition.x, Input.mousePosition.y, 10);
-        //Debug.Log(mousePosition);
-        Vector3 objPosition = Camera.main.ScreenToWorldPoint(mousePosition);
-        //Debug.Log(objPosition);
-        LineRenderer.SetPosition(1, objPosition);
+        Vector2 input = Input.mousePosition;
+        if (input.x > 0 && input.x < Screen.width && input.y > 0 && input.y < Screen.height)
+        {
+            LineRenderer.enabled = true;
+            LineRenderer.useWorldSpace = true;
+            //设置开始和结束位置0代表第一个点，1代表第二个点
+            Vector3 cameraPosition = this.transform.position;
+            cameraPosition.y -= 10;
+            LineRenderer.SetPosition(0, cameraPosition);
+            //Debug.Log(this.transform.position);
+            Vector3 mousePosition = new Vector3(input.x, input.y, 10);
+            //Debug.Log(mousePosition);
+            Vector3 objPosition = Camera.main.ScreenToWorldPoint(mousePosition);
+            //Debug.Log(objPosition);
+            LineRenderer.SetPosition(1, objPosition);
+        }
+        else
+        {
+            LineRenderer.enabled = false;
+        }
 
         // ctrl + R to reset
         if (Input.GetKey(KeyCode.LeftControl) && Input.GetKeyDown(KeyCode.R)) {
@@ -92,4 +101,5 @@ public class XRCamera : CBC {
   void OnApplicationQuit() {
     RawInput.Stop();
   }
+
 }

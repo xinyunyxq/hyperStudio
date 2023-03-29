@@ -12,28 +12,23 @@ public class MonitorManager : CBC
     public LineRenderer LineRenderer;
     public float radius; //屏幕分布的球体半径
     private List<uDesktopDuplication.Texture> textures;
-    private List<MonitorControl> controls;
     private uDesktopDuplication.Monitor ArMonitor;
     private bool CursorInArMonitor;
     private bool WaitCursor;
     private Vector2 destPoint;
     private int destTextureID;
-    int width = 1920;
-    int height = 1080;
     EventBus eb;
 
     public RectTransform debugpoint;
+
     void Start()
     {
         // center of primary monitor
-        //width = Screen.currentResolution.width;
-        //height = Screen.currentResolution.height;
         this.CursorInArMonitor = true;
         WaitCursor = false;
         this.GetComponent<SphereCollider>().radius = radius;
         this.eb = this.Get<EventBus>();
         textures = new List<uDesktopDuplication.Texture>(); 
-        controls = new List<MonitorControl>();
         var primaryCenter = this.GetCenter(Manager.primary);
 
         for (var i = 0; i < Manager.monitors.Count; i++)
@@ -53,7 +48,6 @@ public class MonitorManager : CBC
                 texture.monitorId = i;
                 var monitorControl = obj.GetComponent<MonitorControl>();
                 textures.Add(texture);
-                controls.Add(monitorControl);
                 Debug.Log(monitor.id);
 
                 if (Config.instance.Monitors.Length > i)
@@ -87,46 +81,118 @@ public class MonitorManager : CBC
             else
             {
                 ArMonitor = monitor;
-                //var monitorControl = obj.GetComponent<MonitorControl>();
-                //monitorControl.IsArMonitor = true;
             }
         }
 
         RawInput.OnMouseMove += (args) =>
         {
-            //Win32.SetCursorPos((int)926, (int)58);
-            //Debug.Log(args.Point);
-            if(MonitorContainCursor(ArMonitor,args.Point,0))
+            if (Config.instance.CursorSpaceMove)
             {
-                Vector3 mousePos = new Vector3(args.Point.x - ArMonitor.left, ArMonitor.height - (args.Point.y - ArMonitor.top), 1000);
-                Vector3 toPos = Camera.main.ScreenToWorldPoint(mousePos);
-
-                for (var i = 0; i < textures.Count; i++)
+                if (!RawInput.LockMouse)
                 {
-                    //鼠标移入屏幕面板时自动跳转至扩展屏真实屏幕坐标
-                    var result = textures[i].RayCast(Camera.main.transform.position, toPos - Camera.main.transform.position);
-                    if (result.hit)// && result.coords.x == result.coords.x && result.coords.y == result.coords.y)//排除出现NAN数据的情况，出现原因待查
+                    if (CursorInArMonitor)
                     {
-                        if (MonitorContainCursor(textures[i].monitor, result.desktopCoord, 10))
+                        if (MonitorContainCursor(ArMonitor, args.Point, 0))
                         {
-                            Debug.Log("鼠标命中面板:" + result.desktopCoord);
-                            RawInput.LockMouse = true;
-                            //CursorInArMonitor = false;
-                            //eb.Invoke("tip", "into pos:" + result.desktopCoord);
-                            //Win32.SetCursorPos((int)result.desktopCoord.x, (int)result.desktopCoord.y);
-                            //MouseMove((int)result.desktopCoord.x, (int)result.desktopCoord.y);
-                            //StartCoroutine(MouseMoveToVirtualMonitor(i, result.desktopCoord));
-                            destPoint = result.desktopCoord;
-                            destTextureID = i;
-                            WaitCursor = true;
-                            break;
+                            //鼠标在AR屏幕中
+                            if (!Config.instance.CursorSpaceMoveEdit)
+                            {
+                                Vector3 mousePos = new Vector3(args.Point.x - ArMonitor.left, ArMonitor.height - (args.Point.y - ArMonitor.top), 1000);
+                                Vector3 toPos = Camera.main.ScreenToWorldPoint(mousePos);
+
+                                for (var i = 0; i < textures.Count; i++)
+                                {
+                                    //鼠标移入屏幕面板时自动跳转至扩展屏真实屏幕坐标
+                                    var result = textures[i].RayCast(Camera.main.transform.position, toPos - Camera.main.transform.position);
+                                    if (result.hit)
+                                    {
+                                        if (MonitorContainCursor(textures[i].monitor, result.desktopCoord, 3))//需要进一步缩小一定像素的屏幕检测空间，防止鼠标在极限边缘来回跳转
+                                        {
+                                            Debug.Log("鼠标命中面板:" + result.desktopCoord);
+                                            RawInput.LockMouse = true; //锁住鼠标，执行鼠标跳转，实测鼠标跳转不一定成功，为了判断执行是否成功必须锁住鼠标移动，否则用户移动鼠标会干扰系统跳转的判断
+                                            CursorInArMonitor = false;
+                                            destPoint = result.desktopCoord;
+                                            destTextureID = i;
+                                            WaitCursor = true;
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        else
+                        {
+                            //限制鼠标在ar屏中
+                            bool limitCursor = false;
+                            if (args.Point.x < ArMonitor.left)
+                            {
+                                args.Point.x = ArMonitor.left;
+                                limitCursor = true;
+                            }
+                            if (args.Point.x > ArMonitor.right -1)
+                            {
+                                args.Point.x = ArMonitor.right - 1;
+                                limitCursor = true;
+                            }
+                            if (args.Point.y < ArMonitor.top)
+                            {
+                                args.Point.y = ArMonitor.top;
+                                limitCursor = true;
+                            }
+                            if (args.Point.y > ArMonitor.bottom -1)
+                            {
+                                args.Point.y = ArMonitor.bottom - 1;
+                                limitCursor = true;
+                            }
+                            if(limitCursor)
+                            {
+                                RawInput.LockMouse = true;
+                                destPoint = args.Point;
+                                WaitCursor = true;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        //鼠标不在AR屏幕中
+
+                        //鼠标是否移出当前所在扩展屏
+                        if (!MonitorContainCursor(textures[destTextureID].monitor, args.Point, 0))
+                        {
+
+                            if (args.Point.x < textures[destTextureID].monitor.left)
+                            {
+                                args.Point.x = textures[destTextureID].monitor.left;
+                            }
+                            if (args.Point.x > textures[destTextureID].monitor.right - 1)
+                            {
+                                args.Point.x = textures[destTextureID].monitor.right - 1;
+                            }
+                            if (args.Point.y < textures[destTextureID].monitor.top)
+                            {
+                                args.Point.y = textures[destTextureID].monitor.top;
+                            }
+                            if (args.Point.y > textures[destTextureID].monitor.bottom - 1)
+                            {
+                                args.Point.y = textures[destTextureID].monitor.bottom - 1;
+                            }
+
+                            Debug.Log("鼠标移出扩展屏" + textures[destTextureID].monitorId + "鼠标位置:" + args.Point);
+
+                            
+                            Vector3 worldPos = textures[destTextureID].GetWorldPositionFromCoord(new Vector2(args.Point.x - textures[destTextureID].monitor.left, args.Point.y - textures[destTextureID].monitor.top));
+                            destPoint = GetScreenPosition(worldPos);
+                            if (MonitorContainCursor(ArMonitor, destPoint, 3))
+                            {
+                                RawInput.LockMouse = true;
+                                WaitCursor = true;
+                                CursorInArMonitor = true;
+                            }
+                                
+                            
                         }
                     }
                 }
-            }
-            else
-            {
-                Debug.Log("not contain");
             }
         };
 
@@ -134,125 +200,26 @@ public class MonitorManager : CBC
         {
             if (Config.instance.CursorSpaceMove)
             {
-                if (!WaitCursor)
+                if (WaitCursor)
                 {
                     POINT curCursor = new POINT();
                     Win32.GetCursorPos(out curCursor);
-                    Debug.Log("鼠标真实位置:" + curCursor);
-            //        if (CursorInArMonitor)
-            //        {
-            //            //if (curCursor.X >= ArMonitor.left && curCursor.X < ArMonitor.right && curCursor.Y >= ArMonitor.top && curCursor.Y < ArMonitor.bottom)//鼠标处于AR显示器中
-            //            if (MonitorContainCursor(ArMonitor ,new Vector2(curCursor.X, curCursor.Y),0))//鼠标处于AR显示器中
-            //            {
-            //                Vector3 mousePos = new Vector3(curCursor.X - ArMonitor.left, ArMonitor.height - (curCursor.Y - ArMonitor.top), 1000);
-            //                Debug.Log("鼠标在AR屏鼠标位置:" + mousePos);
-            //                Vector3 toPos = Camera.main.ScreenToWorldPoint(mousePos);
-
-            //                for (var i = 0; i < textures.Count; i++)
-            //                {
-            //                    //鼠标移入屏幕面板时自动跳转至扩展屏真实屏幕坐标
-            //                    var result = textures[i].RayCast(Camera.main.transform.position, toPos - Camera.main.transform.position);
-            //                    if (result.hit)// && result.coords.x == result.coords.x && result.coords.y == result.coords.y)//排除出现NAN数据的情况，出现原因待查
-            //                    {
-            //                        if (MonitorContainCursor(textures[i].monitor, result.desktopCoord, 20))
-            //                        {
-            //                            Debug.Log("鼠标命中面板:" + result.desktopCoord);
-            //                            CursorInArMonitor = false;
-            //                            //eb.Invoke("tip", "into pos:" + result.desktopCoord);
-            //                            //Win32.SetCursorPos((int)result.desktopCoord.x, (int)result.desktopCoord.y);
-            //                            //MouseMove((int)result.desktopCoord.x, (int)result.desktopCoord.y);
-            //                            //StartCoroutine(MouseMoveToVirtualMonitor(i, result.desktopCoord));
-            //                            destPoint = result.desktopCoord;
-            //                            destTextureID = i;
-            //                            WaitCursor = true;
-            //                            break;
-            //                        }
-            //                    }
-            //                }
-
-            //            }
-            //            else
-            //            {
-            //                //Debug.Log("鼠标超出屏幕位置:" + mousePos);
-            //                //if (CursorInArMonitor)
-            //                //{
-            //                //    if (mousePos.x < 0)
-            //                //    {
-            //                //        mousePos.x = 0;
-            //                //    }
-            //                //    if (mousePos.x >= width-1)
-            //                //    {
-            //                //        mousePos.x = width - 1;
-            //                //    }
-            //                //    if (mousePos.y < 0)
-            //                //    {
-            //                //        mousePos.y = 0;
-            //                //    }
-            //                //    if (mousePos.y >= height-1)
-            //                //    {
-            //                //        mousePos.y = height - 1;
-            //                //    }
-            //                //    //Mouse.current.WarpCursorPosition(mousePos);
-
-            //                //}
-            //            }
-            //        }
-            //        else
-            //        {
-            //            if(!MonitorContainCursor(textures[destTextureID].monitor, new Vector2(curCursor.X, curCursor.Y),0))
-            //            {
-            //                Vector2 desktopCur = new Vector2(curCursor.X, curCursor.Y);
-            //                if (curCursor.X < textures[destTextureID].monitor.left)
-            //                {
-            //                    desktopCur.x = textures[destTextureID].monitor.left;
-            //                }
-            //                if (curCursor.X > textures[destTextureID].monitor.right)
-            //                {
-            //                    desktopCur.x = textures[destTextureID].monitor.right;
-            //                }
-            //                if (curCursor.Y <= textures[destTextureID].monitor.top)
-            //                {
-            //                    desktopCur.y = textures[destTextureID].monitor.top;
-            //                }
-            //                if (curCursor.Y >= textures[destTextureID].monitor.bottom)
-            //                {
-            //                    desktopCur.y = textures[destTextureID].monitor.bottom;
-            //                }
-
-            //                //Debug.Log("鼠标移出扩展屏" + texture.monitorId + "鼠标位置:" + curCursor);
-            //                Vector3 worldPos = textures[destTextureID].GetWorldPositionFromCoord(new Vector2(desktopCur.x - textures[destTextureID].monitor.left, desktopCur.y - textures[destTextureID].monitor.top));
-            //                destPoint = GetScreenPosition(worldPos);
-            //                debugpoint.position = destPoint;
-            //                WaitCursor = true;
-            //                CursorInArMonitor = true;
-            //            }
-            //        }
-            //    }
-            //    else
-            //    {
-            //        POINT curCursor = new POINT();
-            //        Win32.GetCursorPos(out curCursor);
-            //        Debug.Log("获取鼠标位置");
-            //        if (!MonitorContainCursor(textures[destTextureID].monitor, new Vector2(curCursor.X, curCursor.Y), 0))
-            //        {
-            //            Debug.Log("鼠标不在目标位置，移动鼠标");
-            //            Win32.SetCursorPos((int)destPoint.x, (int)destPoint.y);
-            //        }
-            //        else
-            //        {
-            //            WaitCursor = false;
-            //        }
+                    Debug.Log("获取鼠标位置");
+                    if ((int)destPoint.x != curCursor.X || (int)destPoint.y != curCursor.Y)
+                    {
+                       Debug.Log("鼠标不在目标位置，移动鼠标");
+                       Win32.SetCursorPos((int)destPoint.x, (int)destPoint.y);
+                    }
+                    else
+                    {
+                       WaitCursor = false;
+                       RawInput.LockMouse = false;
+                    }
                 }
             }
         });
 
-        //eb.AddListener("cursor world pos", (Vector3 value) => {
-        //    Vector2 position = GetScreenPosition(value);
-        //    debugpoint.position = position;
-        //    StartCoroutine(MouseMoveToARMonitor(position));
-        //    //Debug.Log("鼠标移出屏幕invoke执行完成");
-        //});
-
+        //tudo
         RawInput.OnKeyDown += (key) =>
         {
             if (key == RawKey.E) 
@@ -268,21 +235,6 @@ public class MonitorManager : CBC
                     {
                         RawInput.LockMouse = true;
                     }
-                    //Win32.SetCursorPos((int)100, (int)100);
-                    //if (Config.instance.CursorSpaceMove)
-                    //{
-                    //    Config.instance.CursorSpaceMove = false;
-                    //    //StartCoroutine(MouseMoveToARMonitor(new Vector2(width/2,height/2)));
-                    //}
-                    //else
-                    //{
-                    //    Config.instance.CursorSpaceMove = true;
-                    //    CursorInArMonitor = true;
-                    //    for (var i = 0; i < controls.Count; i++)
-                    //    {
-                    //        controls[i].enableEdgeDetection = false;
-                    //    }
-                    //}
                 }
             }
             if(key == RawKey.W)
@@ -291,70 +243,28 @@ public class MonitorManager : CBC
             }
 
         };
+
+        if (Input.GetKey(KeyCode.LeftControl) && Input.GetKeyDown(KeyCode.W))
+        {
+            Debug.Log("E down");
+            if (RawInput.IsKeyDown(RawKey.LeftControl))
+            {
+                if (RawInput.LockMouse)
+                {
+                    RawInput.LockMouse = false;
+                }
+                else
+                {
+                    RawInput.LockMouse = true;
+                }
+            }
+        }
     }
 
     Vector3 GetCenter(Monitor monitor)
     {
         return new Vector3(monitor.left + (monitor.right - monitor.left) / 2, -(monitor.top + (monitor.bottom - monitor.top) / 2), 0);
     }
-
-
-    IEnumerator MouseMoveToVirtualMonitor(int i,Vector2 destPoint)//保证鼠标移动正确，有概率执行鼠标移动会失败
-    {
-        POINT curCursor = new POINT();
-        Win32.GetCursorPos(out curCursor);
-        Debug.Log("获取鼠标位置");
-        while (!VirtualMonitorContainCursor(textures[i], new Vector2(curCursor.X, curCursor.Y), 20))
-        {
-            Debug.Log("鼠标不在目标位置，移动鼠标");
-            Win32.SetCursorPos((int)destPoint.x, (int)destPoint.y);
-            yield return null;
-            Win32.GetCursorPos(out curCursor);
-            Debug.Log("再次获取鼠标位置");
-        }
-        controls[i].enableEdgeDetection = true;
-        Debug.Log("鼠标移进屏幕执行完成");
-    }
-    IEnumerator MouseMoveToMonitor(Monitor monitor, Vector2 curPoint, Vector2 destPoint)//保证鼠标移动正确，有概率执行鼠标移动会失败
-    {
-        POINT curCursor = new POINT();
-        Win32.GetCursorPos(out curCursor);
-        Debug.Log("获取鼠标位置");
-        while (!MonitorContainCursor(monitor, curPoint, 20))
-        {
-            Debug.Log("鼠标不在目标位置，移动鼠标");
-            Win32.SetCursorPos((int)destPoint.x, (int)destPoint.y);
-            yield return null;
-            Win32.GetCursorPos(out curCursor);
-            Debug.Log("再次获取鼠标位置");
-        }
-        //controls[i].enableEdgeDetection = true;
-        Debug.Log("鼠标移进屏幕执行完成");
-    }
-
-    IEnumerator MouseMoveToARMonitor(Vector2 destPoint)
-    {
-        POINT curCursor = new POINT();
-        Win32.GetCursorPos(out curCursor);
-        Debug.Log("鼠标目标位置"+destPoint);
-        eb.Invoke("tip", "鼠标目标位置:" + destPoint+"cur"+ curCursor);
-        //while (!ArMonitorContainCursor(new Vector2(curCursor.X, curCursor.Y)))
-        while (!DestContainCursor(new Vector2(curCursor.X, curCursor.Y), destPoint))
-        {
-            Debug.Log("鼠标不在目标位置，移动鼠标");
-            eb.Invoke("tip", "鼠标不在目标位置:");
-            //Mouse.current.WarpCursorPosition(destPoint);
-            Win32.SetCursorPos((int)destPoint.x, (int)destPoint.y);
-            yield return null;
-            Win32.GetCursorPos(out curCursor);
-            Debug.Log("再次获取鼠标位置");
-            eb.Invoke("tip", "鼠标目标位置:" + destPoint + "再次获取鼠标位置" + curCursor);
-        }
-        Debug.Log("鼠标到达目标位置");
-        eb.Invoke("tip", "鼠标到达目标位置:");
-        CursorInArMonitor = true;
-    }
-
         /// <summary>
         /// 射线碰撞检测，反向检测
         /// </summary>
@@ -404,28 +314,10 @@ public class MonitorManager : CBC
         return screenPos;
     }
 
-    bool ArMonitorContainCursor(Vector2 mousePos)
-    {
-        //return (mousePos.x >= 0 && mousePos.x < width && mousePos.y >= 0 && mousePos.y < height);
-
-        return (mousePos.x > ArMonitor.left && mousePos.x < ArMonitor.right - 1
-                                 && mousePos.y > ArMonitor.top && mousePos.y < ArMonitor.bottom - 1);
-    }
-
-    bool VirtualMonitorContainCursor(uDesktopDuplication.Texture texture,Vector2 value,int offset)
-    {
-        return (value.x > texture.monitor.left + offset&& value.x < texture.monitor.right - 1-offset
-                                 && value.y > texture.monitor.top+offset && value.y < texture.monitor.bottom - 1-offset);
-    }
-
     bool MonitorContainCursor(Monitor monitor, Vector2 value, int offset)
     {
         return (value.x > monitor.left + offset && value.x < monitor.right - 1 - offset
                                  && value.y > monitor.top + offset && value.y < monitor.bottom - 1 - offset);
     }
 
-    bool DestContainCursor(Vector2 mousePos,Vector2 destPos)
-    {
-        return (mousePos.x >=destPos.x-100 && mousePos.x <= destPos.x+100 && mousePos.y >= destPos.y-100 && mousePos.y <=destPos.y+100);
-    }
 }

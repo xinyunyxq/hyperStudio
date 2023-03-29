@@ -18,6 +18,7 @@ public class InterfaceHandle : MonoBehaviour
     private void OnEditButtonClick()
     {
         Debug.Log("µã»÷ÊÂ¼þ");
+        Config.instance.CursorSpaceMoveEdit = !Config.instance.CursorSpaceMoveEdit;
     }
 
     // Update is called once per frame

@@ -46,6 +46,7 @@ public class Config
     public float TipMessageTimeout;
     public int PanelLuminance;
     public bool CursorSpaceMove;   //鼠标空间移动功能，false时在扩展屏之间移动（windows扩展屏的鼠标移动方式），true时鼠标移出一个扩展屏时会跳转到ar空间，并从空间移动跳转到另一个屏幕
+    public bool CursorSpaceMoveEdit; //鼠标空间移动功能下的编辑模式
     public HotKeyConfig ResetViewHotKey;
     public MonitorConfig[] Monitors;
 
@@ -69,6 +70,7 @@ public class Config
             config.TipMessageTimeout = 5;
             config.PanelLuminance = 0;
             config.CursorSpaceMove = true;
+            config.CursorSpaceMoveEdit = false;
             config.Monitors = new MonitorConfig[0];
             changed = true;
         }

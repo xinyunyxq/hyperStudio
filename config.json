@@ -4,6 +4,7 @@
     "TipMessageTimeout": 5.0,
     "PanelLuminance": 0,
     "CursorSpaceMove": true,
+    "CursorSpaceMoveEdit": false,
     "ResetViewHotKey": {
         "Enabled": true,
         "Modifier": 10,

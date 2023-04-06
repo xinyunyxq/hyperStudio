@@ -6,11 +6,10 @@
 
 > **Note**: This is only available on Windows.
 
-Cast your PC screens to Leiniao AR glasses.
+这是一个使用AR眼镜实现多屏办公的项目，配合iddsampledriver实现多个虚拟扩展屏，并将扩展屏投射到AR眼镜，目前支持雷鸟AR眼镜.
 
-## [Download](https://github.com/DiscreteTom/HyperStudio/releases)
-
-## Features
+## [Download](https://github.com/xinyunyxq/hyperStudio)
+## 功能
 
 - Auto apply your monitor layout from your system settings.
 - Optionally show on all virtual desktops.

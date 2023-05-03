@@ -33,5 +33,11 @@ public static class Win32 {
     [DllImport("user32.dll", CharSet = CharSet.Auto)]
     public static extern bool GetCursorPos(out POINT pt);
 
+    [DllImport("user32.dll")]
+    public static extern int SetWindowPos(IntPtr hWnd, int hWndInsertAfter, int x, int y, int Width, int Height, int flags);
+
+    [DllImport("User32.dll")]
+    private static extern bool IsIconic(IntPtr hWnd);
+
 }
 

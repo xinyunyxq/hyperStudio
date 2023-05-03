@@ -136,63 +136,63 @@ public class MonitorControl : CBC
         if (enableEdit)
         {
             // blink
-            this.GetComponent<Renderer>().material.color = Color.Lerp(Color.white, Color.gray, Mathf.PingPong(Time.time * 2, 1));
+            //this.GetComponent<Renderer>().material.color = Color.Lerp(Color.white, Color.gray, Mathf.PingPong(Time.time * 2, 1));
 
             // drag
-            if (Input.GetMouseButtonDown(0))
-            {
-                this.dragging = true;
-            }
+            //if (Input.GetMouseButtonDown(0))
+            //{
+            //    this.dragging = true;
+            //}
 
             // scale & push & pull
-            float scroll = Input.GetAxis("Mouse ScrollWheel");
-            if (!Input.GetKey(KeyCode.LeftControl))
-            {
-                // scale the object when the mouse wheel is scrolled
-                if (scroll != 0)
-                {
-                    Vector3 scale = this.transform.localScale;
-                    scale.x *= 1 + scroll;
-                    scale.y *= 1 + scroll;
-                    scale.z *= 1 + scroll;
-                    this.transform.localScale = scale;
-                }
-            }
-            else
-            {
-                // push away or pull towards the camera when the mouse wheel is scrolled and ctrl is held down
-                if (scroll != 0)
-                {
-                    var direction = (this.transform.position - Camera.main.transform.position).normalized;
-                    this.transform.position = this.transform.position + direction * scroll;
-                }
-            }
+            //float scroll = Input.GetAxis("Mouse ScrollWheel");
+            //if (!Input.GetKey(KeyCode.LeftControl))
+            //{
+            //    // scale the object when the mouse wheel is scrolled
+            //    if (scroll != 0)
+            //    {
+            //        Vector3 scale = this.transform.localScale;
+            //        scale.x *= 1 + scroll;
+            //        scale.y *= 1 + scroll;
+            //        scale.z *= 1 + scroll;
+            //        this.transform.localScale = scale;
+            //    }
+            //}
+            //else
+            //{
+            //    // push away or pull towards the camera when the mouse wheel is scrolled and ctrl is held down
+            //    if (scroll != 0)
+            //    {
+            //        var direction = (this.transform.position - Camera.main.transform.position).normalized;
+            //        this.transform.position = this.transform.position + direction * scroll;
+            //    }
+            //}
 
-            // press backspace to delete the object
-            if (Input.GetKeyDown(KeyCode.Backspace))
-            {
-                Destroy(this.gameObject);
-                this.eb.Invoke("tip", "Remove Screen: " + this.texture.monitorId);
-            }
+            // press delete to delete the object
+            //if (Input.GetKeyDown(KeyCode.Delete))
+            //{
+            //    Destroy(this.gameObject);
+            //    this.eb.Invoke("tip", "Remove Screen: " + this.texture.monitorId);
+            //}
 
             // ctrl + '+'/'-' to bend the monitor, ctrl + '0' to toggle bend
-            if (Input.GetKey(KeyCode.LeftControl))
-            {
-                if (Input.GetKey(KeyCode.Equals))
-                {
-                    this.texture.radius += 8 * Time.deltaTime;
-                    Debug.Log("texture radius:" + this.texture.radius);
-                }
-                if (Input.GetKey(KeyCode.Minus))
-                {
-                    this.texture.radius -= 8 * Time.deltaTime;
-                    Debug.Log("texture radius:" + this.texture.radius);
-                }
-                if (Input.GetKeyDown(KeyCode.Alpha0))
-                {
-                    this.texture.bend = !this.texture.bend;
-                }
-            }
+            //if (Input.GetKey(KeyCode.LeftControl))
+            //{
+            //    if (Input.GetKey(KeyCode.Equals))
+            //    {
+            //        this.texture.radius += 8 * Time.deltaTime;
+            //        Debug.Log("texture radius:" + this.texture.radius);
+            //    }
+            //    if (Input.GetKey(KeyCode.Minus))
+            //    {
+            //        this.texture.radius -= 8 * Time.deltaTime;
+            //        Debug.Log("texture radius:" + this.texture.radius);
+            //    }
+            //    if (Input.GetKeyDown(KeyCode.Alpha0))
+            //    {
+            //        this.texture.bend = !this.texture.bend;
+            //    }
+            //}
 
             // ctrl + j/k/l/u/i/o to rotate monitor
             if (Input.GetKey(KeyCode.LeftControl))

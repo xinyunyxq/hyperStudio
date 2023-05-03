@@ -47,6 +47,9 @@ public class Config
     public int PanelLuminance;
     public bool CursorSpaceMove;   //鼠标空间移动功能，false时在扩展屏之间移动（windows扩展屏的鼠标移动方式），true时鼠标移出一个扩展屏时会跳转到ar空间，并从空间移动跳转到另一个屏幕
     public bool CursorSpaceMoveEdit; //鼠标空间移动功能下的编辑模式
+    public float MainCameraFov;    //主相机视野
+    public float ScreenDistances;  //屏幕面板空间距离
+    public float GyroSensitivity;  //陀螺仪灵敏度
     public HotKeyConfig ResetViewHotKey;
     public MonitorConfig[] Monitors;
 
@@ -60,6 +63,7 @@ public class Config
         catch
         {
             config = null;
+            Debug.Log("can not find config.json");
         }
         var changed = false;
         if (config == null)
@@ -70,7 +74,11 @@ public class Config
             config.TipMessageTimeout = 5;
             config.PanelLuminance = 0;
             config.CursorSpaceMove = true;
-            config.CursorSpaceMoveEdit = false;
+            config.CursorSpaceMoveEdit = true;
+            config.MainCameraFov = 30f;
+            config.ScreenDistances = 30f;
+            config.GyroSensitivity = 1f;
+
             config.Monitors = new MonitorConfig[0];
             changed = true;
         }
@@ -93,7 +101,14 @@ public class Config
 
     public static void Save(Config config)
     {
-        File.WriteAllText("config.json", JsonUtility.ToJson(config, true));
+        try
+        {
+            File.WriteAllText("config.json", JsonUtility.ToJson(config, true));
+        }
+        catch
+        {
+            Debug.Log("save config.json error!");
+        }
     }
 
     // singleton

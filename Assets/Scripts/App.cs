@@ -15,8 +15,8 @@ public class App : Entry {
       Win32.SetWindowLongA(handle, -20, 0x80);
     }
 #endif
-    // inject context
-    var eb = this.Add<EventBus>();
+        // inject context
+        var eb = this.Add<EventBus>();
 
     this.OnUpdate.AddListener(() => {
       // Ctrl + S to save config

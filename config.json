@@ -4,7 +4,10 @@
     "TipMessageTimeout": 5.0,
     "PanelLuminance": 0,
     "CursorSpaceMove": true,
-    "CursorSpaceMoveEdit": false,
+    "CursorSpaceMoveEdit": true,
+    "MainCameraFov": 30.0,
+    "ScreenDistances": 30.0,
+    "GyroSensitivity": 1.0,
     "ResetViewHotKey": {
         "Enabled": true,
         "Modifier": 10,
